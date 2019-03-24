@@ -83,34 +83,48 @@ for instructions and the project rubric.
 * You don't have to follow this directory structure, but if you do, your work
   will span all of the .cpp files here. Keep an eye out for TODOs.
 
-## Call for IDE Profiles Pull Requests
+WriteUp:-
 
-Help your fellow students!
+MODEL:-
 
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. We omitted IDE profiles to ensure
-students don't feel pressured to use one IDE or another.
+The model used in MPC Project is a kinematic model that uses vehicle's coordinate(x,y), velocity(v), orientation(psi), cross track error(cte), orientation error(epsi).
 
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
+A 3-degree polynomial were fitted to the waypoints sent from the server which were used to calculate the cte and epsi.
 
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
+The car has two actuators, it can accelerate/brake, and steer.
 
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
+The constraints were defined on following for minimizing the ot function:
 
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. Most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
+cte
+epsi
+velocity
 
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
+Constraints on the steering:
 
-## How to write a README
-A well written README file can enhance your project and portfolio and develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+steering angle
+throttle
+
+Constraints in difference of the below steering actuators sequentially
+
+steering angles
+throttle
+There was no special handling done to handle latency but the assumption is that adding a constraint for the differences in steering actuators soothes the values and keeps sequential values closer thus accounting for some latency.
+
+Updated equations for this model are:
+
+x1 = (x0 + v0 * cos(psi0) * dt)
+
+y1 = (y0 + v0 * sin(psi0) * dt)
+
+psi1 = (psi0 + v0 / Lf * delta0 * dt)
+
+v1 = (v0 + a0 * dt)
+
+cte1 = ((f0 - y0) + (v0 * sin(epsi0) * dt))
+
+epsi1 = ((psi0 - psides0) + v0 * delta0 / Lf * dt)
+
+In those equations v is speed, x and y are positional coordinates, psi is the orientation, delta is the steering angle, Lf the distance between the front of the vehicle and it center of gravity, a is the accelerator pedal actuation, psides is the desired orientation, cte is the cross track error, epsi is the orientation error and dt is the time step.
+
+Checking timesteps & interval between timesteps
+The N & the dt parameters (the timestamp length and the duration between timesteps) are constant for all.  Increasing the timesteps (N) parameter made the model less sensitive at higher velocities and caused the vehicle to veer out of the track on sharp turns. Decreasing the duration between timesteps (dt) parameter caused the vehicle to be over-sensitive and caused the vehicle to veer off courser at the start itself.I settled for having a step of 0,075 seconds and using 10 steps. This results in a modeled trajectory up to 0,75 second into the future.configuration also depends on latency.
